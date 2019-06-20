@@ -1,6 +1,7 @@
 package sk.habalam.network;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
@@ -28,17 +29,18 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("Duplicates")
 public class StringComparisonNetwork {
 
 	private static final Logger logger = LoggerFactory.getLogger(StringComparisonNetwork.class);
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		RecordReader recordReader = new CSVRecordReader();
-		recordReader.initialize(new FileSplit(new ClassPathResource("/input/small_string_examples.csv").getFile()));
+		recordReader.initialize(new FileSplit(new ClassPathResource("/input/generated_strings_data_transformed.csv").getFile()));
 
 		int labelIndex = 200;
 		int numbClasses = 2;
-		int batchSize = 400;
+		int batchSize = 10000;
 
 		DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader, batchSize, labelIndex, numbClasses);
 		DataSet dataSet = iterator.next();
@@ -48,7 +50,7 @@ public class StringComparisonNetwork {
 		normalizer.fit(dataSet);
 		normalizer.transform(dataSet);
 
-		SplitTestAndTrain testAndTrain = dataSet.splitTestAndTrain(0.5);
+		SplitTestAndTrain testAndTrain = dataSet.splitTestAndTrain(0.8);
 		DataSet trainingData = testAndTrain.getTrain();
 		DataSet testingData = testAndTrain.getTest();
 
@@ -58,17 +60,20 @@ public class StringComparisonNetwork {
 			.seed(seed)
 			.activation(Activation.TANH)
 			.weightInit(WeightInit.XAVIER)
-			.updater(new Sgd(0.5))
+			.updater(new Sgd(0.1))
 			.l2(1e-4)
 			.list()
-			.layer(new DenseLayer.Builder().nIn(200).nOut(150).build())
-			.layer(new DenseLayer.Builder().nIn(150).nOut(100).build())
+			.layer(new DenseLayer.Builder().nIn(200).nOut(100).build())
 			.layer(new DenseLayer.Builder().nIn(100).nOut(50).build())
-			.layer(new DenseLayer.Builder().nIn(50).nOut(25).build())
-			.layer(new DenseLayer.Builder().nIn(25).nOut(12).build())
-			.layer(new DenseLayer.Builder().nIn(12).nOut(6).build())
-			.layer(new DenseLayer.Builder().nIn(6).nOut(3).build())
-			.layer(new DenseLayer.Builder().nIn(3).nOut(2).build())
+			.layer(new DenseLayer.Builder().nIn(50).nOut(2).build())
+//			.layer(new DenseLayer.Builder().nIn(200).nOut(150).build())
+//			.layer(new DenseLayer.Builder().nIn(150).nOut(100).build())
+//			.layer(new DenseLayer.Builder().nIn(100).nOut(50).build())
+//			.layer(new DenseLayer.Builder().nIn(50).nOut(25).build())
+//			.layer(new DenseLayer.Builder().nIn(25).nOut(12).build())
+//			.layer(new DenseLayer.Builder().nIn(12).nOut(6).build())
+//			.layer(new DenseLayer.Builder().nIn(6).nOut(3).build())
+//			.layer(new DenseLayer.Builder().nIn(3).nOut(2).build())
 			.layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD).activation(Activation.SOFTMAX).nIn(2).nOut(2).build())
 			.backpropType(BackpropType.Standard)
 			.build();
@@ -77,7 +82,7 @@ public class StringComparisonNetwork {
 		network.init();
 		network.setListeners(new ScoreIterationListener(100));
 
-		for (int i = 0; i < 10000; i++) {
+		for (int i = 0; i < 1000; i++) {
 			network.fit(trainingData);
 		}
 

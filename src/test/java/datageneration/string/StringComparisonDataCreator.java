@@ -31,15 +31,23 @@ public class StringComparisonDataCreator {
 			AtomicInteger linesProcessed = new AtomicInteger();
 			StringBuilder sb = new StringBuilder();
 			BufferedWriter bf = new BufferedWriter(new FileWriter(new File("generated_strings_data.csv")));
+			List<String> usedStrings = new ArrayList<>();
 			linesStream.forEach(line -> {
-				sb.append(line).append(',');
+				if (line.length() > 100) {
+					line = line.substring(0, 100);
+				}
+				appendString(sb, line.replaceAll("\"", "\\\\\"")).append(',');
 				if (linesProcessed.get() % 3 == 0) {
-					sb.append(",0");
-					//TODO nezodpovedajúce stringy
+					if (!usedStrings.isEmpty()) {
+						appendString(sb, usedStrings.get(new Random().nextInt(usedStrings.size() - 1))).append(",0");
+					}
+					else {
+						appendString(sb, RandomStringUtils.randomAlphabetic(10));
+					}
 				}
 				else {
 					String stringVariant = generateStringVariant(line);
-					sb.append(stringVariant).append(",1");
+					appendString(sb, stringVariant.replaceAll("\"", "\\\\\"")).append(",1");
 				}
 				
 				try {
@@ -50,12 +58,19 @@ public class StringComparisonDataCreator {
 					e.printStackTrace();
 				}
 
+				logger.info(sb.toString());
 				//clear SB
 				sb.setLength(0);
+				usedStrings.add(line);
 				linesProcessed.getAndIncrement();
 			});
-			logger.info(sb.toString());
+			bf.flush();
+			bf.close();
 		}
+	}
+
+	private static StringBuilder appendString(StringBuilder stringBuilder, String sentence) {
+		return  stringBuilder.append("\"").append(sentence).append("\"");
 	}
 
 	private static String generateStringVariant(String sentence) {

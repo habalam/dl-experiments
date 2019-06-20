@@ -24,8 +24,8 @@ public class CsvFileStringTransformer {
 
 	public static void main(String[] args) throws IOException {
 		CSVReader csvReader = new CSVReader(new InputStreamReader(
-			new FileInputStream(new ClassPathResource("/input/export.csv").getFile())));
-		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("export_transformed.csv")));
+			new FileInputStream(new ClassPathResource("/input/generated_strings_data.csv").getFile())));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("generated_strings_data_transformed.csv")));
 		while (true) {
 			String[] line = csvReader.readNext();
 			if (line == null) {
